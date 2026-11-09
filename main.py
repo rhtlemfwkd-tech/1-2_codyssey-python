@@ -1,66 +1,9 @@
-from score import update_best_score, show_best_score
-from quiz_list import show_quiz_list
-from quiz_add import add_quiz
-from default_quizzes import create_default_quizzes
-from quiz_play import play_quiz
-def show_menu():
-    print("\n========================================")
-    print("         Python 기초 퀴즈 게임")
-    print("========================================")
-    print("1. 퀴즈 풀기")
-    print("2. 퀴즈 추가")
-    print("3. 퀴즈 목록")
-    print("4. 점수 확인")
-    print("5. 종료")
-    print("========================================")
+from quiz_game import QuizGame
 
 
 def main():
-    quizzes = create_default_quizzes()
-    best_result = None
-
-    while True:
-        show_menu()
-
-        try:
-            value = input("선택: ").strip()
-
-            if not value:
-                print("빈 입력입니다.")
-                continue
-
-            choice = int(value)
-
-        except ValueError:
-            print("숫자를 입력해주세요.")
-            continue
-
-        except (KeyboardInterrupt, EOFError):
-            print("\n안전하게 종료합니다.")
-            break
-
-        if choice == 1:
-            result = play_quiz(quizzes)
-
-            if result is not None:
-                 correct_count, total = result
-
-                 best_result, is_new_record = update_best_score(
-                     best_result, correct_count, total
-                )
-            if is_new_record:
-                print("🎉 새로운 최고 점수입니다!")
-        elif choice == 2:
-            add_quiz(quizzes)
-        elif choice == 3:
-            show_quiz_list(quizzes)
-        elif choice == 4:
-            show_best_score(best_result)
-        elif choice == 5:
-            print("게임을 종료합니다.")
-            break
-        else:
-            print("1~5 사이의 숫자를 입력해주세요.")
+    game = QuizGame()
+    game.run()
 
 
 if __name__ == "__main__":
