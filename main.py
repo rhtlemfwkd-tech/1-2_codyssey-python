@@ -1,3 +1,4 @@
+from quiz_list import show_quiz_list
 from quiz_add import add_quiz
 from default_quizzes import create_default_quizzes
 from quiz_play import play_quiz
@@ -41,7 +42,7 @@ def main():
         elif choice == 2:
             add_quiz(quizzes)
         elif choice == 3:
-            print("퀴즈 목록 (준비 중)")
+            show_quiz_list(quizzes)
         elif choice == 4:
             print("점수 확인 (준비 중)")
         elif choice == 5:
