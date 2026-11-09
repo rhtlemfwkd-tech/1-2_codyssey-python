@@ -1,3 +1,4 @@
+from score import update_best_score, show_best_score
 from quiz_list import show_quiz_list
 from quiz_add import add_quiz
 from default_quizzes import create_default_quizzes
@@ -16,6 +17,7 @@ def show_menu():
 
 def main():
     quizzes = create_default_quizzes()
+    best_result = None
 
     while True:
         show_menu()
@@ -38,13 +40,22 @@ def main():
             break
 
         if choice == 1:
-            play_quiz(quizzes)
+            result = play_quiz(quizzes)
+
+            if result is not None:
+                 correct_count, total = result
+
+                 best_result, is_new_record = update_best_score(
+                     best_result, correct_count, total
+                )
+            if is_new_record:
+                print("🎉 새로운 최고 점수입니다!")
         elif choice == 2:
             add_quiz(quizzes)
         elif choice == 3:
             show_quiz_list(quizzes)
         elif choice == 4:
-            print("점수 확인 (준비 중)")
+            show_best_score(best_result)
         elif choice == 5:
             print("게임을 종료합니다.")
             break
