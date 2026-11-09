@@ -1,3 +1,5 @@
+from default_quizzes import create_default_quizzes
+from quiz_play import play_quiz
 def show_menu():
     print("\n========================================")
     print("         Python 기초 퀴즈 게임")
@@ -11,6 +13,8 @@ def show_menu():
 
 
 def main():
+    quizzes = create_default_quizzes()
+
     while True:
         show_menu()
 
@@ -32,7 +36,7 @@ def main():
             break
 
         if choice == 1:
-            print("퀴즈 풀기 (준비 중)")
+            play_quiz(quizzes)
         elif choice == 2:
             print("퀴즈 추가 (준비 중)")
         elif choice == 3:
