@@ -1,3 +1,7 @@
+import json
+from pathlib import Path
+
+from quiz import Quiz
 from default_quizzes import create_default_quizzes
 from quiz_play import play_quiz
 from quiz_add import add_quiz
@@ -5,10 +9,108 @@ from quiz_list import show_quiz_list
 from score import update_best_score, show_best_score
 
 
+STATE_PATH = Path(__file__).resolve().parent / "state.json"
+
+
 class QuizGame:
     def __init__(self):
         self.quizzes = create_default_quizzes()
         self.best_result = None
+        self.load_state()
+
+    def save_state(self):
+        data = {
+            "quizzes": [
+                {
+                    "question": quiz.question,
+                    "choices": quiz.choices,
+                    "answer": quiz.answer
+                }
+                for quiz in self.quizzes
+            ],
+            "best_score": self.best_result
+        }
+
+        try:
+            with STATE_PATH.open("w", encoding="utf-8") as file:
+                json.dump(data, file, ensure_ascii=False, indent=2)
+
+            print("데이터를 저장했습니다.")
+            return True
+
+        except OSError as error:
+            print(f"데이터 저장 실패: {error}")
+            return False
+
+    def load_state(self):
+        if not STATE_PATH.exists():
+            print("저장 파일이 없어 기본 퀴즈를 사용합니다.")
+            return
+
+        try:
+            with STATE_PATH.open("r", encoding="utf-8") as file:
+                data = json.load(file)
+
+            if not isinstance(data, dict):
+                raise ValueError("데이터 형식이 올바르지 않습니다.")
+
+            if not isinstance(data.get("quizzes"), list):
+                raise ValueError("퀴즈 목록 형식이 잘못되었습니다.")
+
+            loaded_quizzes = []
+
+            for item in data["quizzes"]:
+                if not isinstance(item, dict):
+                    raise ValueError("퀴즈 데이터가 잘못되었습니다.")
+
+                question = item["question"]
+                choices = item["choices"]
+                answer = item["answer"]
+
+                if (
+                    not isinstance(question, str)
+                    or not question.strip()
+                    or not isinstance(choices, list)
+                    or len(choices) != 4
+                    or not all(
+                        isinstance(choice, str) and choice.strip()
+                        for choice in choices
+                    )
+                    or type(answer) is not int
+                ):
+                    raise ValueError("퀴즈 데이터가 유효하지 않습니다.")
+
+                loaded_quizzes.append(
+                    Quiz(question, choices, answer)
+                )
+
+            best = data.get("best_score")
+
+            if best is not None:
+                if (
+                    not isinstance(best, dict)
+                    or not all(
+                        type(best.get(key)) is int
+                        for key in ("score", "correct", "total")
+                    )
+                    or best["total"] <= 0
+                    or not 0 <= best["correct"] <= best["total"]
+                    or best["score"] != round(
+                        best["correct"] / best["total"] * 100
+                    )
+                ):
+                    raise ValueError("최고 점수 데이터가 잘못되었습니다.")
+
+            self.quizzes = loaded_quizzes
+            self.best_result = best
+
+            print(f"저장된 퀴즈 {len(self.quizzes)}개를 불러왔습니다.")
+
+        except (OSError, UnicodeError, ValueError, TypeError, KeyError) as error:
+            print(f"데이터 불러오기 실패: {error}")
+            print("기본 퀴즈와 초기 점수로 복구합니다.")
+            self.quizzes = create_default_quizzes()
+            self.best_result = None
 
     def show_menu(self):
         print("\n========================================")
@@ -35,9 +137,11 @@ class QuizGame:
 
         if is_new_record:
             print("새로운 최고 점수입니다!")
+            self.save_state()
 
     def add(self):
-        add_quiz(self.quizzes)
+        if add_quiz(self.quizzes):
+            self.save_state()
 
     def show_list(self):
         show_quiz_list(self.quizzes)
