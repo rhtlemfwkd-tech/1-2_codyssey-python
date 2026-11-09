@@ -159,3 +159,11 @@ state.json은 .gitignore에 등록되어 Git에 포함되지 않습니다.
 - JSON 파일 입출력
 - 예외 처리
 - Git 버전 관리
+
+## 12. Git Clone / Pull 실습
+
+별도 디렉터리로 저장소를 복제한 뒤
+README를 수정하여 commit 및 push했습니다.
+
+기존 작업 디렉터리에서 pull로 변경사항을 가져와
+정상적으로 반영되는지 확인했습니다.
