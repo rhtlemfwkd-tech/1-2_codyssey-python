@@ -226,6 +226,13 @@ main 브랜치에 병합했습니다.
 
 ![Git Init](docs/screenshots/git-init.png)
 
+### 13.10 자동 백업 및 복구
+
+state.json 손상 시 state.json.bak에서
+퀴즈와 최고 점수를 복원하는 테스트를 수행했습니다.
+
+![자동 백업 복구](docs/screenshots/backup-recovery-pass.png)
+
 ## 14. 설계 결정 및 한계
 
 ### 객체 지향 설계
