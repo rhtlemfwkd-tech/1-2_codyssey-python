@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 from pathlib import Path
 
 from quiz import Quiz
@@ -10,6 +12,7 @@ from score import update_best_score, show_best_score
 
 
 STATE_PATH = Path(__file__).resolve().parent / "state.json"
+BACKUP_PATH = STATE_PATH.with_name("state.json.bak")
 
 
 class QuizGame:
@@ -32,8 +35,26 @@ class QuizGame:
         }
 
         try:
-            with STATE_PATH.open("w", encoding="utf-8") as file:
-                json.dump(data, file, ensure_ascii=False, indent=2)
+            for target in (STATE_PATH, BACKUP_PATH):
+                temporary = None
+                try:
+                    with tempfile.NamedTemporaryFile(
+                        mode="w",
+                        encoding="utf-8",
+                        dir=STATE_PATH.parent,
+                        prefix=f".{target.name}.",
+                        suffix=".tmp",
+                        delete=False,
+                    ) as file:
+                        temporary = file.name
+                        json.dump(data, file, ensure_ascii=False, indent=2)
+                        file.flush()
+                        os.fsync(file.fileno())
+
+                    os.replace(temporary, target)
+                finally:
+                    if temporary and os.path.exists(temporary):
+                        os.unlink(temporary)
 
             print("데이터를 저장했습니다.")
             return True
@@ -42,13 +63,17 @@ class QuizGame:
             print(f"데이터 저장 실패: {error}")
             return False
 
-    def load_state(self):
-        if not STATE_PATH.exists():
+    def load_state(self, path=STATE_PATH):
+        if not path.exists():
+            if path == STATE_PATH and BACKUP_PATH.exists():
+                print("원본 파일이 없어 백업을 확인합니다.")
+                return self.load_state(BACKUP_PATH)
+
             print("저장 파일이 없어 기본 퀴즈를 사용합니다.")
             return
 
         try:
-            with STATE_PATH.open("r", encoding="utf-8") as file:
+            with path.open("r", encoding="utf-8") as file:
                 data = json.load(file)
 
             if not isinstance(data, dict):
@@ -106,9 +131,18 @@ class QuizGame:
 
             print(f"저장된 퀴즈 {len(self.quizzes)}개를 불러왔습니다.")
 
+            if path == BACKUP_PATH:
+                print("백업 파일에서 데이터를 복구했습니다.")
+                self.save_state()
+
         except (OSError, UnicodeError, ValueError, TypeError, KeyError) as error:
-            print(f"데이터 불러오기 실패: {error}")
-            print("기본 퀴즈와 초기 점수로 복구합니다.")
+            print(f"데이터 불러오기 실패 ({path.name}): {error}")
+
+            if path == STATE_PATH and BACKUP_PATH.exists():
+                print("백업 파일 복구를 시도합니다.")
+                return self.load_state(BACKUP_PATH)
+
+            print("사용 가능한 백업이 없어 기본 퀴즈와 초기 점수로 복구합니다.")
             self.quizzes = create_default_quizzes()
             self.best_result = None
 
