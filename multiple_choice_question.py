@@ -1,4 +1,6 @@
-class Quiz:
+"""객관식 문제 한 개의 데이터·선택지·정답 판정을 정의한다."""
+
+class MultipleChoiceQuestion:
     def __init__(self, question, choices, answer):
         if len(choices) != 4:
             raise ValueError("선택지는 4개여야 합니다.")
