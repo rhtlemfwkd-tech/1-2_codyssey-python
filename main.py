@@ -1,13 +1,13 @@
-from quiz_game import QuizGame
+from quiz_game_flow import QuizGame
 
 
 def main():
     game = QuizGame()
 
     try:
-        game.run()
+        game.run_menu()
     finally:
-        game.save_state()
+        game.save_progress()
 
 
 if __name__ == "__main__":

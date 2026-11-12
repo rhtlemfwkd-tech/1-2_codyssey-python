@@ -8,7 +8,7 @@ Python 기초 문법과 객체 지향 프로그래밍을 학습하기 위해
 사용자가 퀴즈를 풀거나 새로운 문제를 등록할 수 있는
 Python 콘솔 프로그램입니다.
 
-Quiz와 QuizGame 클래스를 통해 역할을 분리하고,
+MultipleChoiceQuestion과 QuizGame 클래스로 역할을 분리하고,
 JSON 파일을 이용해 퀴즈와 최고 점수를 영구 저장합니다.
 
 ## 2. 퀴즈 주제 및 선정 이유
@@ -65,47 +65,42 @@ Python 실행 명령은 운영체제 환경에 따라 다를 수 있습니다.
 ## 6. 프로젝트 파일 구조
 
     1-2_codyssey-python/
-    ├── main.py
-    ├── quiz.py
-    ├── quiz_game.py
-    ├── quiz_play.py
-    ├── quiz_add.py
-    ├── quiz_list.py
-    ├── score.py
-    ├── default_quizzes.py
-    ├── state.json
+    ├── main.py                         # 게임 생성·시작·종료
+    ├── multiple_choice_question.py     # 객관식 문제 데이터·정답 판정
+    ├── quiz_game_flow.py               # 메뉴·출제·등록·목록·점수
+    ├── quiz_json_save_load.py          # JSON 저장·읽기·백업 복구
+    ├── default_quiz_questions.py       # 기본 객관식 문제 5개
+    ├── tests/                         # 회귀 테스트
     ├── .gitignore
     ├── README.md
-    └── docs/
-        └── screenshots/
+    └── docs/screenshots/
 
-state.json은 실행 시 생성되는 로컬 데이터 파일입니다.
+실행 시 `state.json`, `state.json.bak`이 로컬에서 생성될 수 있지만 Git에는 포함되지 않습니다.
 
-## 7. 클래스 구조
+## 7. 클래스와 모듈 설계
 
-### Quiz
+### MultipleChoiceQuestion (`multiple_choice_question.py`)
 
-개별 퀴즈를 표현하는 클래스입니다.
+객관식 문제 1개의 내용·선택지 4개·정답 번호를 보유합니다.
+- `show_question()`: 문제와 선택지 출력
+- `check_answer()`: 입력한 번호와 정답 비교
 
-- question: 문제 내용
-- choices: 선택지 4개
-- answer: 정답 번호
-- show_question(): 문제 출력
-- check_answer(): 정답 확인
+### QuizGame (`quiz_game_flow.py`)
 
-### QuizGame
+게임 실행 중 문제 목록과 최고 기록을 관리합니다.
+- `run_menu()`: 메뉴 입력 및 기능 분기
+- `play_quiz()`: 문제 출제, 입력, 점수 계산
+- `add_question()`: 문제 등록
+- `show_question_list()`: 문제 목록 표시
+- `show_best_score()`: 최고 기록 표시
+- `save_progress()`: JSON 저장 함수 호출
 
-게임 전체의 실행과 상태를 관리하는 클래스입니다.
+### 독립 함수 모듈
 
-- quizzes: 퀴즈 목록
-- best_result: 최고 점수 기록
-- run(): 메뉴 실행
-- play(): 퀴즈 진행
-- add(): 퀴즈 등록
-- show_list(): 목록 출력
-- show_score(): 최고 점수 확인
-- save_state(): JSON 저장
-- load_state(): JSON 불러오기
+- `quiz_json_save_load.py`: `load_quiz_state()`·`save_quiz_state()` 및 검증·복구
+- `default_quiz_questions.py`: `create_default_questions()`으로 기본 문제 5개 생성
+
+데이터 객체 파일은 **무엇을 표현하는지**, 기능 모듈은 **무슨 작업을 하는지**가 드러나도록 이름 지었습니다.
 
 ## 8. 데이터 파일 (state.json)
 
@@ -126,7 +121,7 @@ best_score는 기록이 없을 때 null이며,
 기록이 있으면 score, correct, total을 가진 객체입니다.
 
 파일이 없으면 기본 퀴즈 5개로 시작합니다.
-파일이 손상되면 안내 메시지를 출력하고 초기화합니다.
+원본이 손상되면 백업에서 복구하고, 둘 다 손상되면 기존 파일을 보존한 채 자동 저장을 차단합니다.
 
 state.json은 .gitignore에 등록되어 Git에 포함되지 않습니다.
 
@@ -237,10 +232,13 @@ state.json 손상 시 state.json.bak에서
 
 ### 객체 지향 설계
 
-Quiz는 개별 문제의 데이터와 정답 판정을 담당하고,
-QuizGame은 전체 게임 실행과 상태를 관리합니다.
+`MultipleChoiceQuestion`은 문제 한 개와 정답 판정만 담당합니다.
+`QuizGame`은 게임 진행과 메모리 상태를 담당합니다.
+`quiz_json_save_load.py`는 JSON 저장·검증·백업 복구를 담당합니다.
 
-기능별 책임을 나누어 코드 수정과 유지보수를 쉽게 했습니다.
+초기에는 작은 기능을 8개 파일에 나누었으나 호출 흐름이 불분명하여,
+게임 상태를 사용하는 로직을 `QuizGame`에 묶었습니다.
+파일 수를 줄이는 것 자체가 목적이 아니라 변경 이유에 따라 코드를 묶는 것이 목적입니다.
 
 ### 데이터 저장 전략
 
@@ -257,7 +255,7 @@ JSON은 사람이 읽기 쉽고 외부 라이브러리가 필요 없다는
 
 정상 저장 시 state.json.bak 백업본도 갱신합니다.
 원본이 없거나 손상되면 백업본을 자동 검증하고 복원합니다.
-원본과 백업이 모두 손상된 경우에는 기본 퀴즈로 초기화합니다.
+원본과 백업이 모두 손상되면 기본 퀴즈를 메모리에서 사용하되 자동 저장은 차단해 기존 파일을 보호합니다.
 
 백업은 최신 저장 상태의 복사본 1개이며,
 과거 여러 버전으로 되돌리는 기능은 제공하지 않습니다.
@@ -265,13 +263,10 @@ JSON은 사람이 읽기 쉽고 외부 라이브러리가 필요 없다는
 
 ### 입력 및 예외 처리
 
-main 메뉴 입력은 QuizGame이 관리합니다.
-퀴즈 정답 입력은 quiz_play.py,
-퀴즈 등록 입력은 quiz_add.py가 담당합니다.
-
-숫자 변환 실패와 범위 초과 시 재입력을 요청합니다.
-파일 읽기·쓰기 오류는 안내 메시지로 처리하며,
-별도 로그 파일은 생성하지 않습니다.
+`QuizGame.run_menu()`는 메뉴 입력을 처리합니다.
+`QuizGame.play_quiz()`는 정답 입력을, `QuizGame.add_question()`은 문제 등록을 처리합니다.
+입력 오류는 재입력을 요청하고 Ctrl+C/EOF로 중단할 수 있습니다.
+파일 읽기·쓰기 오류는 `quiz_json_save_load.py`에서 처리합니다.
 
 ### Git 브랜치 전략
 
@@ -283,3 +278,10 @@ feature/quiz-play 브랜치에서 퀴즈 플레이 기능을 개발했습니다.
 
 커밋 메시지에는 주로 Feat, Fix, Refactor, Docs 등의
 접두사를 사용하여 변경 목적을 나타냈습니다.
+## 15. 이름과 책임을 명확히 한 리팩터링
+
+- 이전: `Quiz`, `QuizGame` 클래스 + 여러 작은 기능 모듈
+- 현재: `MultipleChoiceQuestion`, `QuizGame` 클래스 + 명시적 JSON 입출력 모듈
+- Python 실행 파일 5개. 기존 JSON 키(`quizzes`, `best_score`)와 저장 형식 유지
+- 원본·백업이 모두 손상되면 덮어쓰지 않아 기존 사용자 데이터 보호
+- 기존 Git 실습 이력과 스크린샷은 이전 구현 당시의 증빙
